@@ -43,9 +43,31 @@ body {
   gap: 20px;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
 .header-left .logo-img {
   height: 40px;
   width: auto;
+}
+
+.header-nav {
+  display: flex;
+  gap: 16px;
+}
+
+.header-nav .nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.2s;
+}
+
+.header-nav .nav-link:hover {
+  color: var(--text-primary);
 }
 
 .header-center {
