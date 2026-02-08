@@ -86,7 +86,7 @@ The server proxies API requests to OpenClaw, solving CORS issues.
 PORT=3000 node export-server.js
 
 # Custom OpenClaw gateway URL (if not on default port 18789)
-OPENCLAW_URL=http://localhost:11470 node export-server.js
+OPENCLAW_URL=http://localhost:YOUR_PORT node export-server.js
 
 # Expose to network (⚠️ only on trusted networks!)
 HOST=0.0.0.0 node export-server.js
@@ -146,7 +146,7 @@ Some OpenClaw widgets require authentication. Here's how to get your API key:
 openclaw gateway config
 
 # The gateway status endpoint doesn't require auth
-curl http://localhost:11470/api/status
+curl http://localhost:YOUR_PORT/api/status
 ```
 
 **Note**: The `/api/status` endpoint is typically public and doesn't require authentication. Other endpoints like `/api/activity` and `/api/logs` may require a token.
