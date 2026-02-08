@@ -82,15 +82,26 @@ The server proxies API requests to OpenClaw, solving CORS issues.
 
 **Configuration** (environment variables):
 ```bash
-# Custom port
+# Custom port for the dashboard server
 PORT=3000 node export-server.js
 
-# Custom OpenClaw URL (if not on default port)
+# Custom OpenClaw gateway URL (if not on default port 18789)
 OPENCLAW_URL=http://localhost:11470 node export-server.js
 
 # Expose to network (⚠️ only on trusted networks!)
 HOST=0.0.0.0 node export-server.js
 ```
+
+> **⚠️ Non-Default Gateway Port?**
+> 
+> If your OpenClaw gateway runs on a port other than `18789` (the default), you **must** set the `OPENCLAW_URL` environment variable. Check your gateway port:
+> ```bash
+> grep '"port"' ~/.openclaw/openclaw.json
+> ```
+> Then start the server with:
+> ```bash
+> OPENCLAW_URL=http://localhost:YOUR_PORT node export-server.js
+> ```
 
 ### Option B: Run OpenClaw with CORS Headers
 
