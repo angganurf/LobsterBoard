@@ -1,1 +1,22 @@
-{"canvas": {"width": 1920, "height": 1080}, "widgets": []}
+{
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "widgets": [
+    {
+      "id": "widget-1",
+      "type": "weather",
+      "x": 20,
+      "y": 20,
+      "width": 200,
+      "height": 120,
+      "properties": {
+        "title": "Local Weather",
+        "location": "Atlanta",
+        "units": "F",
+        "refreshInterval": 600
+      }
+    }
+  ]
+}

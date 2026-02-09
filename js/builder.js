@@ -42,6 +42,7 @@ function setEditMode(enable) {
   const saveBtn = document.getElementById('btn-save');
 
   if (enable) {
+    stopWidgetScripts();
     editLayoutBtn.style.display = 'none';
     saveBtn.textContent = '💾 Save';
     saveBtn.removeEventListener('click', exportDashboard);
@@ -90,6 +91,57 @@ function setEditMode(enable) {
     }
   });
   selectWidget(null); // Deselect any widget when mode changes
+  updateEmptyState();
+  if (!enable && state.widgets.length > 0) {
+    executeWidgetScripts();
+  }
+}
+
+// Execute widget JS for live preview (view mode)
+function executeWidgetScripts() {
+  // Clear any existing intervals from previous executions
+  if (window._widgetIntervals) {
+    window._widgetIntervals.forEach(id => clearInterval(id));
+  }
+  window._widgetIntervals = [];
+
+  // Override setInterval to track widget intervals
+  const origSetInterval = window.setInterval;
+  window.setInterval = function(fn, ms) {
+    const id = origSetInterval(fn, ms);
+    window._widgetIntervals.push(id);
+    return id;
+  };
+
+  state.widgets.forEach(widget => {
+    const template = WIDGETS[widget.type];
+    if (!template || !template.generateJs) return;
+    const props = { ...widget.properties, id: 'preview-' + widget.id };
+    try {
+      const js = template.generateJs(props);
+      new Function(js)();
+    } catch (e) {
+      console.error(`Widget ${widget.type} script error:`, e);
+    }
+  });
+
+  // Restore original setInterval
+  window.setInterval = origSetInterval;
+}
+
+function stopWidgetScripts() {
+  if (window._widgetIntervals) {
+    window._widgetIntervals.forEach(id => clearInterval(id));
+    window._widgetIntervals = [];
+  }
+}
+
+function updateEmptyState() {
+  if (state.widgets.length === 0) {
+    document.body.classList.add('empty-dashboard');
+  } else {
+    document.body.classList.remove('empty-dashboard');
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -116,6 +168,9 @@ async function loadConfig() {
     }
     console.log('Dashboard config loaded successfully.');
     setEditMode(false); // Start in view mode
+    if (state.widgets.length > 0) {
+      executeWidgetScripts();
+    }
   } catch (error) {
     console.error('Failed to load dashboard config:', error);
     // If config fails to load, start in edit mode with a blank canvas
@@ -174,6 +229,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize Edit Layout button
   document.getElementById('btn-edit-layout').addEventListener('click', () => setEditMode(true));
+  document.getElementById('btn-done-editing').addEventListener('click', () => {
+    saveConfig();
+    setEditMode(false);
+  });
 });
 
 function initCanvas() {
@@ -339,6 +398,7 @@ function createWidget(type, x, y) {
 
   state.widgets.push(widget);
   renderWidget(widget);
+  updateEmptyState();
   selectWidget(id);
   updateCanvasInfo();
 
@@ -445,6 +505,7 @@ function deleteWidget(id) {
   document.getElementById(id)?.remove();
   selectWidget(null);
   updateCanvasInfo();
+  updateEmptyState();
 
   if (state.widgets.length === 0) {
     document.getElementById('canvas').classList.remove('has-widgets');
@@ -1014,6 +1075,7 @@ function initControls() {
       state.widgets = [];
       selectWidget(null);
       updateCanvasInfo();
+      updateEmptyState();
       document.getElementById('canvas').classList.remove('has-widgets');
     }
   });
