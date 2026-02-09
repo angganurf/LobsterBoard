@@ -25,8 +25,128 @@ const state = {
   widgets: [],
   selectedWidget: null,
   draggedWidget: null,
-  idCounter: 0
+  idCounter: 0,
+  editMode: false // New: Track edit mode state
 };
+
+// ─────────────────────────────────────────────
+// EDIT MODE
+// ─────────────────────────────────────────────
+
+function setEditMode(enable) {
+  state.editMode = enable;
+  document.body.dataset.mode = enable ? 'edit' : 'view';
+
+  // Toggle button text and handler
+  const editLayoutBtn = document.getElementById('btn-edit-layout');
+  const saveBtn = document.getElementById('btn-save');
+
+  if (enable) {
+    editLayoutBtn.style.display = 'none';
+    saveBtn.textContent = '💾 Save';
+    saveBtn.removeEventListener('click', exportDashboard);
+    saveBtn.addEventListener('click', saveConfig);
+    // Ensure builder panels are visible in edit mode
+    document.querySelector('.builder-header').style.display = 'flex';
+    document.querySelector('.widget-panel').style.display = 'flex';
+    document.getElementById('properties-panel').style.display = 'flex';
+    document.querySelector('.canvas-info').style.display = 'flex';
+    document.getElementById('canvas-wrapper').style.padding = '40px'; // Restore padding
+    document.getElementById('canvas').style.border = '2px solid var(--border)'; // Restore border
+    document.getElementById('canvas').style.borderRadius = '8px'; // Restore border radius
+    document.getElementById('canvas').style.boxShadow = '0 10px 40px rgba(0,0,0,0.5)'; // Restore shadow
+    document.querySelector('.canvas-grid').style.display = 'block'; // Show grid
+    document.querySelector('.drop-hint').style.display = 'flex'; // Show drop hint
+  } else {
+    editLayoutBtn.style.display = 'block';
+    saveBtn.textContent = '📦 Export ZIP';
+    saveBtn.removeEventListener('click', saveConfig);
+    saveBtn.addEventListener('click', exportDashboard);
+    // Hide builder panels in view mode
+    document.querySelector('.builder-header').style.display = 'none';
+    document.querySelector('.widget-panel').style.display = 'none';
+    document.getElementById('properties-panel').style.display = 'none';
+    document.querySelector('.canvas-info').style.display = 'none';
+    document.getElementById('canvas-wrapper').style.padding = '0'; // Remove padding
+    document.getElementById('canvas').style.border = 'none'; // Remove border
+    document.getElementById('canvas').style.borderRadius = '0'; // Remove border radius
+    document.getElementById('canvas').style.boxShadow = 'none'; // Remove shadow
+    document.querySelector('.canvas-grid').style.display = 'none'; // Hide grid
+    document.querySelector('.drop-hint').style.display = 'none'; // Hide drop hint
+  }
+  // Re-render widgets to apply new pointer-events
+  state.widgets.forEach(widget => {
+    const el = document.getElementById(widget.id);
+    if (el) {
+      el.querySelector('.widget-render').style.pointerEvents = enable ? 'none' : 'auto';
+      el.querySelector('.resize-handle').style.display = enable ? 'block' : 'none';
+      if (enable) {
+        el.style.cursor = 'move';
+        el.classList.add('builder-edit-mode'); // Add class for styling in edit mode
+      } else {
+        el.style.cursor = 'default';
+        el.classList.remove('builder-edit-mode'); // Remove class in view mode
+      }
+    }
+  });
+  selectWidget(null); // Deselect any widget when mode changes
+}
+
+// ─────────────────────────────────────────────
+// CONFIG MANAGEMENT
+// ─────────────────────────────────────────────
+
+async function loadConfig() {
+  try {
+    const response = await fetch('/config');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const config = await response.json();
+    
+    state.canvas = config.canvas || { width: 1920, height: 1080 };
+    state.widgets = config.widgets || [];
+    state.idCounter = state.widgets.reduce((maxId, w) => Math.max(maxId, parseInt(w.id.replace('widget-', ''))), 0);
+
+    updateCanvasSize(true); // Preserve zoom on load
+    state.widgets.forEach(renderWidget);
+    updateCanvasInfo();
+    if (state.widgets.length > 0) {
+      document.getElementById('canvas').classList.add('has-widgets');
+    }
+    console.log('Dashboard config loaded successfully.');
+    setEditMode(false); // Start in view mode
+  } catch (error) {
+    console.error('Failed to load dashboard config:', error);
+    // If config fails to load, start in edit mode with a blank canvas
+    setEditMode(true);
+  }
+}
+
+async function saveConfig() {
+  try {
+    const configToSave = {
+      canvas: state.canvas,
+      widgets: state.widgets
+    };
+    const response = await fetch('/config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(configToSave)
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    console.log('Dashboard config saved successfully:', result);
+    alert('Dashboard layout saved!');
+  } catch (error) {
+    console.error('Failed to save dashboard config:', error);
+    alert('Failed to save dashboard layout. See console for details.');
+  }
+}
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -49,7 +169,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initDragDrop();
   initControls();
   initProperties();
-  updateCanvasInfo();
+  loadConfig(); // New: Load config on startup
+  // setEditMode(false) is called inside loadConfig()
+
+  // Initialize Edit Layout button
+  document.getElementById('btn-edit-layout').addEventListener('click', () => setEditMode(true));
 });
 
 function initCanvas() {
@@ -243,22 +367,41 @@ function renderWidget(widget) {
     <div class="resize-handle"></div>
   `;
 
+  // Apply initial edit mode styles
+  if (state.editMode) {
+    el.querySelector('.widget-render').style.pointerEvents = 'none';
+    el.querySelector('.resize-handle').style.display = 'block';
+    el.style.cursor = 'move';
+    el.classList.add('builder-edit-mode');
+  } else {
+    el.querySelector('.widget-render').style.pointerEvents = 'auto';
+    el.querySelector('.resize-handle').style.display = 'none';
+    el.style.cursor = 'default';
+    el.classList.remove('builder-edit-mode');
+  }
+
   // Click to select
   el.addEventListener('click', (e) => {
-    e.stopPropagation();
-    selectWidget(widget.id);
+    if (state.editMode) {
+      e.stopPropagation();
+      selectWidget(widget.id);
+    }
   });
 
   // Drag to move
   el.addEventListener('mousedown', (e) => {
-    if (e.target.classList.contains('resize-handle')) return;
-    startDragWidget(e, widget);
+    if (state.editMode) {
+      if (e.target.classList.contains('resize-handle')) return;
+      startDragWidget(e, widget);
+    }
   });
 
   // Resize handle
   el.querySelector('.resize-handle').addEventListener('mousedown', (e) => {
-    e.stopPropagation();
-    startResizeWidget(e, widget);
+    if (state.editMode) {
+      e.stopPropagation();
+      startResizeWidget(e, widget);
+    }
   });
 
   canvas.appendChild(el);
@@ -878,22 +1021,28 @@ function initControls() {
   // Preview button
   document.getElementById('btn-preview').addEventListener('click', showPreview);
 
-  // Export button
-  document.getElementById('btn-export').addEventListener('click', exportDashboard);
+  // Export button (now Save button)
+  document.getElementById('btn-save').addEventListener('click', saveConfig);
 
   // Close preview
   document.getElementById('close-preview').addEventListener('click', () => {
     document.getElementById('preview-modal').classList.remove('active');
   });
 
+  // Edit layout button
+  document.getElementById('btn-edit-layout').addEventListener('click', () => setEditMode(true));
+
   // Zoom controls - handled via inline onclick in HTML
 
-  // Keyboard shortcuts for zoom
+  // Keyboard shortcuts for zoom and edit mode
   document.addEventListener('keydown', (e) => {
     // Check if not typing in an input
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
-    if (e.key === '=' || e.key === '+') {
+    if (e.ctrlKey && e.key === 'e') { // Ctrl+E to toggle edit mode
+      e.preventDefault();
+      setEditMode(!state.editMode);
+    } else if (e.key === '=' || e.key === '+') {
       e.preventDefault();
       zoomIn();
     } else if (e.key === '-' || e.key === '_') {
@@ -906,7 +1055,7 @@ function initControls() {
       e.preventDefault();
       zoomFit();
     } else if (e.key === 'Delete' || e.key === 'Backspace') {
-      if (state.selectedWidget) {
+      if (state.selectedWidget && state.editMode) {
         e.preventDefault();
         deleteWidget(state.selectedWidget.id);
       }

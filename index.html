@@ -8,7 +8,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="css/builder.css">
 </head>
-<body>
+<body data-mode="view">
   <!-- Header -->
   <header class="builder-header">
     <div class="header-left">
@@ -55,9 +55,12 @@
     <div class="header-right">
       <button class="btn btn-secondary" id="btn-clear">Clear All</button>
       <button class="btn btn-secondary" id="btn-preview">Preview</button>
-      <button class="btn btn-primary" id="btn-export">📦 Export ZIP</button>
+      <button class="btn btn-primary" id="btn-save">💾 Save</button>
     </div>
   </header>
+
+  <!-- Edit button for view mode (fixed position) -->
+  <button id="btn-edit-layout" class="btn btn-primary edit-layout-btn">Edit Layout</button>
 
   <div class="builder-main">
     <!-- Widget Library Panel -->

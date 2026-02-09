@@ -1,4 +1,25 @@
+# Dependencies
 node_modules/
+
+# Build output
+dist/
 
 # Server logs
 *.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# npm
+npm-debug.log*
+.npm
+
+# Testing
+coverage/

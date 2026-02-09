@@ -1,3 +1,9 @@
+/*!
+ * LobsterBoard v0.1.0
+ * Dashboard builder with customizable widgets
+ * https://github.com/curbob/LobsterBoard
+ * @license MIT
+ */
 /**
  * LobsterBoard - Widget Definitions
  * Each widget defines its default size, properties, and generated code
@@ -9,7 +15,7 @@ const WIDGETS = {
   // ─────────────────────────────────────────────
   // SMALL CARDS (KPI style)
   // ─────────────────────────────────────────────
-
+  
   'weather': {
     name: 'Local Weather',
     icon: '🌡️',
@@ -28,7 +34,7 @@ const WIDGETS = {
       <div style="font-size:24px;">72°F</div>
       <div style="font-size:11px;color:#8b949e;">Atlanta</div>
     </div>`,
-    generateHtml: props => `
+    generateHtml: (props) => `
       <div class="dash-card" id="widget-${props.id}" style="height:100%;">
         <div class="dash-card-head">
           <span class="dash-card-title">🌡️ ${props.title || 'Local Weather'}</span>
@@ -41,7 +47,7 @@ const WIDGETS = {
           </div>
         </div>
       </div>`,
-    generateJs: props => `
+    generateJs: (props) => `
       // Weather Widget: ${props.id} (uses free wttr.in API - no key needed)
       async function update_${props.id.replace(/-/g, '_')}() {
         try {
@@ -69,6 +75,7 @@ const WIDGETS = {
       setInterval(update_${props.id.replace(/-/g, '_')}, ${(props.refreshInterval || 600) * 1000});
     `
   },
+
   'clock': {
     name: 'Clock',
     icon: '🕐',
@@ -86,7 +93,7 @@ const WIDGETS = {
       <div style="font-size:24px;">3:45 PM</div>
       <div style="font-size:11px;color:#8b949e;">Wed, Feb 5</div>
     </div>`,
-    generateHtml: props => `
+    generateHtml: (props) => `
       <div class="dash-card" id="widget-${props.id}" style="height:100%;">
         <div class="dash-card-head">
           <span class="dash-card-title">🕐 ${props.title || 'Clock'}</span>
@@ -96,7 +103,7 @@ const WIDGETS = {
           <div class="kpi-label" id="${props.id}-date">—</div>
         </div>
       </div>`,
-    generateJs: props => `
+    generateJs: (props) => `
       // Clock Widget: ${props.id}
       function updateClock_${props.id.replace(/-/g, '_')}() {
         const now = new Date();
@@ -110,6 +117,7 @@ const WIDGETS = {
       setInterval(updateClock_${props.id.replace(/-/g, '_')}, 1000);
     `
   },
+
   'auth-status': {
     name: 'Auth Status',
     icon: '🔐',
@@ -129,7 +137,7 @@ const WIDGETS = {
       <div style="font-size:13px;">OAuth</div>
       <div style="font-size:11px;color:#8b949e;">Auth</div>
     </div>`,
-    generateHtml: props => `
+    generateHtml: (props) => `
       <div class="dash-card" id="widget-${props.id}" style="height:100%;">
         <div class="dash-card-head">
           <span class="dash-card-title">🔐 ${props.title || 'Auth Type'}</span>
@@ -139,7 +147,7 @@ const WIDGETS = {
           <div class="kpi-value" id="${props.id}-value">—</div>
         </div>
       </div>`,
-    generateJs: props => `
+    generateJs: (props) => `
       // Auth Status Widget: ${props.id}
       async function update_${props.id.replace(/-/g, '_')}() {
         try {
@@ -159,6 +167,7 @@ const WIDGETS = {
       setInterval(update_${props.id.replace(/-/g, '_')}, ${(props.refreshInterval || 30) * 1000});
     `
   },
+
   'session-count': {
     name: 'Active Sessions',
     icon: '💬',
@@ -177,7 +186,7 @@ const WIDGETS = {
       <div style="font-size:28px;color:#58a6ff;">3</div>
       <div style="font-size:11px;color:#8b949e;">Active</div>
     </div>`,
-    generateHtml: props => `
+    generateHtml: (props) => `
       <div class="kpi-card kpi-sm" id="widget-${props.id}">
         <div class="kpi-icon">💬</div>
         <div class="kpi-data">
@@ -185,7 +194,7 @@ const WIDGETS = {
           <div class="kpi-label">Active</div>
         </div>
       </div>`,
-    generateJs: props => `
+    generateJs: (props) => `
       // Session Count Widget: ${props.id}
       async function update_${props.id.replace(/-/g, '_')}() {
         try {
@@ -201,6 +210,7 @@ const WIDGETS = {
       setInterval(update_${props.id.replace(/-/g, '_')}, ${(props.refreshInterval || 30) * 1000});
     `
   },
+
   // ─────────────────────────────────────────────
   // LARGE CARDS (Content)
   // ─────────────────────────────────────────────
@@ -225,7 +235,7 @@ const WIDGETS = {
       <div>• Review PR #42</div>
       <div>• Deploy v1.2</div>
     </div>`,
-    generateHtml: props => `
+    generateHtml: (props) => `
       <div class="dash-card" id="widget-${props.id}" style="height:100%;">
         <div class="dash-card-head">
           <span class="dash-card-title">📋 ${props.title || 'Today'}</span>
@@ -236,7 +246,7 @@ const WIDGETS = {
           <div class="list-item">• Review PR #42</div>
         </div>
       </div>`,
-    generateJs: props => `
+    generateJs: (props) => `
       // Activity List Widget: ${props.id}
       async function update_${props.id.replace(/-/g, '_')}() {
         try {
@@ -259,6 +269,7 @@ const WIDGETS = {
       setInterval(update_${props.id.replace(/-/g, '_')}, ${(props.refreshInterval || 60) * 1000});
     `
   },
+
   'cron-jobs': {
     name: 'Cron Jobs',
     icon: '⏰',
@@ -277,7 +288,7 @@ const WIDGETS = {
       <div>⏰ Daily backup - 2am</div>
       <div>⏰ Sync data - */5 *</div>
     </div>`,
-    generateHtml: props => `
+    generateHtml: (props) => `
       <div class="dash-card" id="widget-${props.id}" style="height:100%;">
         <div class="dash-card-head">
           <span class="dash-card-title">⏰ ${props.title || 'Cron'}</span>
@@ -287,7 +298,7 @@ const WIDGETS = {
           <div class="cron-item"><span class="cron-name">Daily backup</span><span class="cron-next">2:00 AM</span></div>
         </div>
       </div>`,
-    generateJs: props => `
+    generateJs: (props) => `
       // Cron Jobs Widget: ${props.id}
       async function update_${props.id.replace(/-/g, '_')}() {
         try {
@@ -310,6 +321,7 @@ const WIDGETS = {
       setInterval(update_${props.id.replace(/-/g, '_')}, ${(props.refreshInterval || 30) * 1000});
     `
   },
+
   'system-log': {
     name: 'System Log',
     icon: '🔧',
@@ -329,7 +341,7 @@ const WIDGETS = {
       <div>[INFO] System started</div>
       <div>[DEBUG] Loading config</div>
     </div>`,
-    generateHtml: props => `
+    generateHtml: (props) => `
       <div class="dash-card" id="widget-${props.id}" style="height:100%;">
         <div class="dash-card-head">
           <span class="dash-card-title">🔧 ${props.title || 'System Log'}</span>
@@ -339,7 +351,7 @@ const WIDGETS = {
           <div class="log-line">[INFO] System started successfully</div>
         </div>
       </div>`,
-    generateJs: props => `
+    generateJs: (props) => `
       // System Log Widget: ${props.id}
       async function update_${props.id.replace(/-/g, '_')}() {
         try {
@@ -363,6 +375,7 @@ const WIDGETS = {
       setInterval(update_${props.id.replace(/-/g, '_')}, ${(props.refreshInterval || 10) * 1000});
     `
   },
+
   // ─────────────────────────────────────────────
   // BARS
   // ─────────────────────────────────────────────
@@ -383,18 +396,20 @@ const WIDGETS = {
       <span>🤖 OpenClaw</span>
       <span style="color:#58a6ff;">Dashboard</span>
     </div>`,
-    generateHtml: props => `
+    generateHtml: (props) => `
       <nav class="topbar" id="widget-${props.id}">
         <div class="topbar-left">
           <span class="topbar-brand">🤖 ${props.title || 'OpenClaw'}</span>
-          ${(props.links || 'Dashboard').split(',').map((link, i) => `<a href="#" class="topbar-link${i === 0 ? ' active' : ''}">${link.trim()}</a>`).join('')}
+          ${(props.links || 'Dashboard').split(',').map((link, i) => 
+            `<a href="#" class="topbar-link${i === 0 ? ' active' : ''}">${link.trim()}</a>`
+          ).join('')}
         </div>
         <div class="topbar-right">
           <span class="topbar-meta" id="${props.id}-refresh">—</span>
           <button class="topbar-refresh" onclick="location.reload()" title="Refresh">↻</button>
         </div>
       </nav>`,
-    generateJs: props => `
+    generateJs: (props) => `
       // Top Bar Widget: ${props.id}
       document.getElementById('${props.id}-refresh').textContent = 
         new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -408,10 +423,7 @@ function getWidgetCategories() {
   for (const [key, widget] of Object.entries(WIDGETS)) {
     const cat = widget.category || 'other';
     if (!categories[cat]) categories[cat] = [];
-    categories[cat].push({
-      key,
-      ...widget
-    });
+    categories[cat].push({ key, ...widget });
   }
   return categories;
 }
@@ -425,15 +437,6 @@ function getWidget(type) {
 function getWidgetTypes() {
   return Object.keys(WIDGETS);
 }
-
-var widgets = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  WIDGETS: WIDGETS,
-  default: WIDGETS,
-  getWidget: getWidget,
-  getWidgetCategories: getWidgetCategories,
-  getWidgetTypes: getWidgetTypes
-});
 
 /**
  * LobsterBoard - Dashboard Builder Core
@@ -460,7 +463,12 @@ function escapeHtml(str) {
     return div.innerHTML;
   }
   // Fallback for Node.js
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 // ─────────────────────────────────────────────
@@ -1005,11 +1013,10 @@ function generateEditJs() {
 function generateWidgetHtml(widget) {
   const template = WIDGETS[widget.type];
   if (!template) return '';
-  const props = {
-    ...widget.properties,
-    id: widget.id
-  };
+
+  const props = { ...widget.properties, id: widget.id };
   let html = processWidgetHtml(template.generateHtml(props), widget.properties.showHeader);
+
   return `
     <div class="widget-container" data-widget-id="${widget.id}" style="position:absolute;left:${widget.x}px;top:${widget.y}px;width:${widget.width}px;height:${widget.height}px;">
       ${html}
@@ -1024,10 +1031,8 @@ function generateWidgetHtml(widget) {
 function generateWidgetJs(widget) {
   const template = WIDGETS[widget.type];
   if (!template || !template.generateJs) return '';
-  const props = {
-    ...widget.properties,
-    id: widget.id
-  };
+
+  const props = { ...widget.properties, id: widget.id };
   return template.generateJs(props);
 }
 
@@ -1039,11 +1044,9 @@ function generateWidgetJs(widget) {
  * @returns {string} Complete HTML document
  */
 function generateDashboardHtml(config) {
-  const {
-    canvas,
-    widgets
-  } = config;
+  const { canvas, widgets } = config;
   const widgetHtml = widgets.map(generateWidgetHtml).join('\n');
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1069,6 +1072,7 @@ function generateDashboardHtml(config) {
 function generateDashboardJs(widgets) {
   const widgetJs = widgets.map(generateWidgetJs).filter(Boolean).join('\n\n');
   const editJs = generateEditJs();
+
   return `/**
  * LobsterBoard Dashboard - Generated JavaScript
  * Replace YOUR_*_API_KEY placeholders with your actual API keys
@@ -1091,7 +1095,10 @@ ${editJs}
  */
 function generateReadme(widgets) {
   const apiKeys = [];
-  const needsOpenClaw = widgets.some(w => ['openclaw-release', 'auth-status', 'activity-list', 'cron-jobs', 'system-log', 'session-count', 'token-gauge'].includes(w.type));
+  const needsOpenClaw = widgets.some(w => 
+    ['openclaw-release', 'auth-status', 'activity-list', 'cron-jobs', 'system-log', 'session-count', 'token-gauge'].includes(w.type)
+  );
+  
   widgets.forEach(widget => {
     const template = WIDGETS[widget.type];
     if (template?.hasApiKey && template.apiKeyName) {
@@ -1100,6 +1107,7 @@ function generateReadme(widgets) {
       }
     }
   });
+
   return `# LobsterBoard Dashboard
 
 This dashboard was generated with LobsterBoard Dashboard Builder.
@@ -1140,6 +1148,7 @@ ${apiKeys.map(key => `- \`YOUR_${key}\``).join('\n')}
 Generated with LobsterBoard - https://github.com/curbob/LobsterBoard
 `;
 }
+
 var builder = {
   escapeHtml,
   processWidgetHtml,
@@ -1152,41 +1161,35 @@ var builder = {
   generateReadme
 };
 
-var builder$1 = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  default: builder,
-  escapeHtml: escapeHtml,
-  generateDashboardCss: generateDashboardCss,
-  generateDashboardHtml: generateDashboardHtml,
-  generateDashboardJs: generateDashboardJs,
-  generateEditJs: generateEditJs,
-  generateReadme: generateReadme,
-  generateWidgetHtml: generateWidgetHtml,
-  generateWidgetJs: generateWidgetJs,
-  processWidgetHtml: processWidgetHtml
-});
-
 /**
- * LobsterBoard - Dashboard Builder & Widget Library
- * Main entry point for npm package
+ * LobsterBoard - Dashboard Builder Library
+ * 
+ * A library for building and generating dashboard configurations
+ * with customizable widgets.
+ * 
+ * @module lobsterboard
+ * @example
+ * // ESM
+ * import { WIDGETS, generateDashboardHtml, generateDashboardCss } from 'lobsterboard';
+ * 
+ * // CommonJS
+ * const { WIDGETS, generateDashboardHtml } = require('lobsterboard');
+ * 
+ * // Browser (UMD)
+ * <script src="https://unpkg.com/lobsterboard"></script>
+ * const { WIDGETS } = LobsterBoard;
  */
 
 
-// Default export with everything
+// Version (will be replaced during build)
+const VERSION = '0.1.0';
+
+// Default export for convenience
 var index = {
-  builder: builder$1,
-  widgets,
-  version: '0.1.0'
+  VERSION,
+  WIDGETS,
+  ...builder
 };
 
-// UMD global exposure (for script tag users)
-if (typeof window !== 'undefined') {
-  window.LobsterBoard = {
-    builder: builder$1,
-    widgets,
-    version: '0.1.0'
-  };
-}
-
-export { builder$1 as builder, index as default, widgets };
+export { VERSION, WIDGETS, index as default, escapeHtml, generateDashboardCss, generateDashboardHtml, generateDashboardJs, generateEditJs, generateReadme, generateWidgetHtml, generateWidgetJs, getWidget, getWidgetCategories, getWidgetTypes, processWidgetHtml };
 //# sourceMappingURL=lobsterboard.esm.js.map
