@@ -3,6 +3,55 @@
  * Each widget defines its default size, properties, and generated code
  */
 
+// ─────────────────────────────────────────────
+// Shared SSE connection for system stats widgets
+// ─────────────────────────────────────────────
+let _statsSource = null;
+let _statsCallbacks = [];
+function onSystemStats(callback) {
+  _statsCallbacks.push(callback);
+  if (!_statsSource) {
+    _statsSource = new EventSource('/api/stats/stream');
+    _statsSource.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        _statsCallbacks.forEach(cb => cb(data));
+      } catch (err) {
+        console.warn('System stats: failed to parse SSE data', err);
+      }
+    };
+    _statsSource.onerror = () => {
+      // EventSource auto-reconnects; just log
+      console.warn('System stats SSE connection error, reconnecting...');
+    };
+  }
+}
+
+function _formatBytes(bytes, decimals = 1) {
+  if (bytes === 0 || bytes == null) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return (bytes / Math.pow(k, i)).toFixed(decimals) + ' ' + sizes[i];
+}
+
+function _formatBytesPerSec(bytes) {
+  if (bytes == null || bytes < 0) return '0 B/s';
+  if (bytes < 1024) return bytes.toFixed(0) + ' B/s';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB/s';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB/s';
+}
+
+function _formatUptime(seconds) {
+  if (!seconds) return '—';
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return d + 'd ' + h + 'h ' + m + 'm';
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + 'm';
+}
+
 const WIDGETS = {
   // ─────────────────────────────────────────────
   // SMALL CARDS (KPI style)
@@ -1175,19 +1224,17 @@ const WIDGETS = {
         <div class="sys-row"><span>MEM</span><span class="green" id="${props.id}-mem">—</span></div>
       </div>`,
     generateJs: (props) => `
-      // CPU/Memory Widget: ${props.id}
-      async function update_${props.id.replace(/-/g, '_')}() {
-        try {
-          const res = await fetch('${props.endpoint || '/api/system'}');
-          const data = await res.json();
-          document.getElementById('${props.id}-cpu').textContent = (data.cpu || 0) + '%';
-          document.getElementById('${props.id}-mem').textContent = (data.memory || 0).toFixed(1) + 'GB';
-        } catch (e) {
-          console.error('System stats error:', e);
+      // CPU/Memory Widget: ${props.id} — live via SSE
+      onSystemStats(function(data) {
+        if (data.cpu) {
+          document.getElementById('${props.id}-cpu').textContent = data.cpu.currentLoad.toFixed(0) + '%';
         }
-      }
-      update_${props.id.replace(/-/g, '_')}();
-      setInterval(update_${props.id.replace(/-/g, '_')}, ${(props.refreshInterval || 5) * 1000});
+        if (data.memory) {
+          const used = (data.memory.active / (1024*1024*1024)).toFixed(1);
+          const total = (data.memory.total / (1024*1024*1024)).toFixed(1);
+          document.getElementById('${props.id}-mem').textContent = used + ' / ' + total + ' GB';
+        }
+      });
     `
   },
 
@@ -1225,22 +1272,20 @@ const WIDGETS = {
         </div>
       </div>`,
     generateJs: (props) => `
-      // Disk Usage Widget: ${props.id}
-      async function update_${props.id.replace(/-/g, '_')}() {
-        try {
-          const res = await fetch('${props.endpoint || '/api/disk'}');
-          const data = await res.json();
-          const pct = data.percent || 0;
-          const circumference = 125.66;
-          document.getElementById('${props.id}-ring').style.strokeDashoffset = circumference - (pct / 100) * circumference;
-          document.getElementById('${props.id}-pct').textContent = pct + '%';
-          document.getElementById('${props.id}-size').textContent = (data.used || 0) + 'GB';
-        } catch (e) {
-          console.error('Disk error:', e);
-        }
-      }
-      update_${props.id.replace(/-/g, '_')}();
-      setInterval(update_${props.id.replace(/-/g, '_')}, ${(props.refreshInterval || 60) * 1000});
+      // Disk Usage Widget: ${props.id} — live via SSE
+      onSystemStats(function(data) {
+        if (!data.disk || data.disk.length === 0) return;
+        // Find the configured mount or default to first/root
+        const targetMount = '${props.path || '/'}';
+        const d = data.disk.find(x => x.mount === targetMount) || data.disk[0];
+        const pct = d.use || 0;
+        const circumference = 125.66;
+        document.getElementById('${props.id}-ring').style.strokeDashoffset = circumference - (pct / 100) * circumference;
+        document.getElementById('${props.id}-pct').textContent = Math.round(pct) + '%';
+        const usedGB = (d.used / (1024*1024*1024)).toFixed(1);
+        const totalGB = (d.size / (1024*1024*1024)).toFixed(0);
+        document.getElementById('${props.id}-size').textContent = usedGB + ' / ' + totalGB + ' GB';
+      });
     `
   },
 
@@ -1274,16 +1319,28 @@ const WIDGETS = {
         </div>
       </div>`,
     generateJs: (props) => `
-      // Uptime Monitor Widget: ${props.id}
-      // Configure your uptime check endpoints
-      const services_${props.id.replace(/-/g, '_')} = '${props.services || 'Service'}'.split(',').map(s => s.trim());
-      function update_${props.id.replace(/-/g, '_')}() {
+      // Uptime Monitor Widget: ${props.id} — live via SSE
+      onSystemStats(function(data) {
+        if (data.uptime == null) return;
         const container = document.getElementById('${props.id}-services');
-        container.innerHTML = services_${props.id.replace(/-/g, '_')}.map(svc => 
-          '<div class="uptime-row"><span>🟢 ' + svc + '</span><span class="uptime-pct">—%</span></div>'
-        ).join('');
-      }
-      update_${props.id.replace(/-/g, '_')}();
+        const secs = data.uptime;
+        const d = Math.floor(secs / 86400);
+        const h = Math.floor((secs % 86400) / 3600);
+        const m = Math.floor((secs % 3600) / 60);
+        let uptimeStr = '';
+        if (d > 0) uptimeStr = d + 'd ' + h + 'h ' + m + 'm';
+        else if (h > 0) uptimeStr = h + 'h ' + m + 'm';
+        else uptimeStr = m + 'm';
+        var html = '<div class="uptime-row"><span>🟢 System</span><span class="uptime-pct">' + uptimeStr + '</span></div>';
+        if (data.cpu) {
+          html += '<div class="uptime-row"><span>💻 CPU Load</span><span class="uptime-pct">' + data.cpu.currentLoad.toFixed(1) + '%</span></div>';
+        }
+        if (data.memory) {
+          const memPct = ((data.memory.active / data.memory.total) * 100).toFixed(1);
+          html += '<div class="uptime-row"><span>🧠 Memory</span><span class="uptime-pct">' + memPct + '%</span></div>';
+        }
+        container.innerHTML = html;
+      });
     `
   },
 
@@ -1318,27 +1375,23 @@ const WIDGETS = {
         </div>
       </div>`,
     generateJs: (props) => `
-      // Docker Containers Widget: ${props.id}
-      async function update_${props.id.replace(/-/g, '_')}() {
-        try {
-          const res = await fetch('${props.endpoint || '/api/docker'}');
-          const json = await res.json();
-          const data = json.data || json;
-          const list = document.getElementById('${props.id}-list');
-          const badge = document.getElementById('${props.id}-badge');
-          const containers = data.containers || [];
-          list.innerHTML = containers.map(c => {
-            const icon = c.status === 'running' ? '🟢' : '🔴';
-            return '<div class="docker-row">' + icon + ' ' + c.name + '<span class="docker-status">' + c.status + '</span></div>';
-          }).join('');
-          badge.textContent = containers.length + ' containers';
-        } catch (e) {
-          console.error('Docker containers widget error:', e);
-          document.getElementById('${props.id}-list').innerHTML = '<div class="docker-row">—</div>';
+      // Docker Containers Widget: ${props.id} — live via SSE
+      onSystemStats(function(data) {
+        const list = document.getElementById('${props.id}-list');
+        const badge = document.getElementById('${props.id}-badge');
+        if (!data.docker || data.docker.length === 0) {
+          list.innerHTML = '<div class="docker-row" style="color:var(--text-muted);">No containers found</div>';
+          badge.textContent = '0';
+          return;
         }
-      }
-      update_${props.id.replace(/-/g, '_')}();
-      setInterval(update_${props.id.replace(/-/g, '_')}, ${(props.refreshInterval || 10) * 1000});
+        const containers = data.docker;
+        list.innerHTML = containers.map(function(c) {
+          const icon = c.state === 'running' ? '🟢' : '🔴';
+          const name = (c.name || '').replace(/^\\//, '');
+          return '<div class="docker-row">' + icon + ' ' + name + '<span class="docker-status">' + (c.state || c.status || '—') + '</span></div>';
+        }).join('');
+        badge.textContent = containers.length;
+      });
     `
   },
 
@@ -1365,19 +1418,26 @@ const WIDGETS = {
         <div class="net-row">↑ <span class="blue" id="${props.id}-up">—</span></div>
       </div>`,
     generateJs: (props) => `
-      // Network Speed Widget: ${props.id}
-      async function update_${props.id.replace(/-/g, '_')}() {
-        try {
-          const res = await fetch('${props.endpoint || '/api/network'}');
-          const data = await res.json();
-          document.getElementById('${props.id}-down').textContent = (data.download || 0) + ' Mbps';
-          document.getElementById('${props.id}-up').textContent = (data.upload || 0) + ' Mbps';
-        } catch (e) {
-          console.error('Network error:', e);
-        }
+      // Network Speed Widget: ${props.id} — live via SSE
+      function _fmtRate(bytes) {
+        if (bytes == null || bytes < 0) return '0 B/s';
+        if (bytes < 1024) return bytes.toFixed(0) + ' B/s';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB/s';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB/s';
       }
-      update_${props.id.replace(/-/g, '_')}();
-      setInterval(update_${props.id.replace(/-/g, '_')}, ${(props.refreshInterval || 2) * 1000});
+      onSystemStats(function(data) {
+        if (!data.network || data.network.length === 0) return;
+        // Sum all interfaces or pick the first non-loopback
+        let rx = 0, tx = 0;
+        data.network.forEach(function(n) {
+          if (n.iface !== 'lo' && n.iface !== 'lo0') {
+            rx += (n.rx_sec || 0);
+            tx += (n.tx_sec || 0);
+          }
+        });
+        document.getElementById('${props.id}-down').textContent = _fmtRate(rx);
+        document.getElementById('${props.id}-up').textContent = _fmtRate(tx);
+      });
     `
   },
 
