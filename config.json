@@ -132,8 +132,8 @@
       "type": "uptime-monitor",
       "x": 820,
       "y": 300,
-      "width": 350,
-      "height": 220,
+      "width": 500,
+      "height": 300,
       "properties": {
         "title": "Uptime",
         "services": "Website,API,Database",

@@ -14,6 +14,46 @@
   --accent-orange: #d29922;
   --accent-red: #f85149;
   --accent-purple: #a371f7;
+  --font-scale: 1;
+}
+
+.canvas {
+  font-size: calc(14px * var(--font-scale));
+}
+
+.canvas .placed-widget {
+  font-size: calc(1em);
+}
+
+.canvas .kpi-value {
+  font-size: calc(24px * var(--font-scale)) !important;
+}
+
+.canvas .kpi-label {
+  font-size: calc(11px * var(--font-scale)) !important;
+}
+
+.canvas .dash-card-title {
+  font-size: calc(12px * var(--font-scale)) !important;
+}
+
+.canvas .dash-card-badge {
+  font-size: calc(11px * var(--font-scale)) !important;
+}
+
+.canvas .uptime-row,
+.canvas .docker-row,
+.canvas .sys-row {
+  font-size: calc(12px * var(--font-scale));
+}
+
+.canvas .weather-row {
+  font-size: calc(13px * var(--font-scale));
+}
+
+.canvas .widget-icon,
+.canvas .weather-icon {
+  font-size: calc(1em * var(--font-scale));
 }
 
 * {

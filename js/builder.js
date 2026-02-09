@@ -26,6 +26,7 @@ const state = {
   selectedWidget: null,
   draggedWidget: null,
   idCounter: 0,
+  fontScale: 1,
   editMode: false // New: Track edit mode state
 };
 
@@ -193,7 +194,11 @@ async function loadConfig() {
     const config = await response.json();
     
     state.canvas = config.canvas || { width: 1920, height: 1080 };
+    state.fontScale = config.fontScale || 1;
     state.widgets = config.widgets || [];
+    document.documentElement.style.setProperty('--font-scale', state.fontScale);
+    const fontScaleEl = document.getElementById('font-scale');
+    if (fontScaleEl) fontScaleEl.value = String(state.fontScale);
     state.idCounter = state.widgets.reduce((maxId, w) => Math.max(maxId, parseInt(w.id.replace('widget-', ''))), 0);
 
     updateCanvasSize(true); // Preserve zoom on load
@@ -218,6 +223,7 @@ async function saveConfig() {
   try {
     const configToSave = {
       canvas: state.canvas,
+      fontScale: state.fontScale || 1,
       widgets: state.widgets
     };
     const response = await fetch('/config', {
@@ -1102,6 +1108,13 @@ function initControls() {
       state.canvas.height = parseInt(document.getElementById('custom-height').value) || 1080;
       updateCanvasSize();
     });
+  });
+
+  // Font scale selector
+  document.getElementById('font-scale').addEventListener('change', (e) => {
+    const scale = parseFloat(e.target.value) || 1;
+    state.fontScale = scale;
+    document.documentElement.style.setProperty('--font-scale', scale);
   });
 
   // Clear button
