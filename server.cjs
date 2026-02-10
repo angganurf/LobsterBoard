@@ -232,8 +232,8 @@ const server = http.createServer((req, res) => {
 
       // Get primary anthropic profile
       const anthropicOrder = config.auth?.order?.anthropic || [];
-      const primaryId = anthropicOrder[0] || 'default';
-      const profileKey = `anthropic:${primaryId}`;
+      const primaryId = anthropicOrder[0] || 'anthropic:default';
+      const profileKey = primaryId.includes(':') ? primaryId : `anthropic:${primaryId}`;
       const profileType = authProfiles.profiles?.[profileKey]?.type;
       const mode = profileType === 'token' ? 'Monthly' : 'API';
 
@@ -255,9 +255,19 @@ const server = http.createServer((req, res) => {
       try {
         let currentVersion = 'unknown';
         try {
-          const pkgPath = require.resolve('openclaw/package.json');
-          const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-          currentVersion = pkg.version;
+          // Use process.execPath to find the node binary's lib directory
+          const nodeDir = path.dirname(path.dirname(process.execPath)); // e.g. /Users/x/.nvm/versions/node/v24.13.0
+          const candidates = [
+            path.join(nodeDir, 'lib/node_modules/openclaw/package.json'),
+            path.join(os.homedir(), '.nvm/versions/node', process.version, 'lib/node_modules/openclaw/package.json'),
+            '/usr/local/lib/node_modules/openclaw/package.json'
+          ];
+          for (const cand of candidates) {
+            try {
+              currentVersion = JSON.parse(fs.readFileSync(cand, 'utf8')).version;
+              break;
+            } catch (_) {}
+          }
         } catch (_) {}
 
         const ghRes = await fetch('https://api.github.com/repos/openclaw/openclaw/releases/latest');
