@@ -910,7 +910,16 @@ function showProperties(widget) {
   // Show API fields
   if (template.hasApiKey) {
     document.getElementById('prop-api-group').style.display = 'block';
-    document.getElementById('prop-api-key').value = template.apiKeyName || '';
+    const apiKeyVarEl = document.getElementById('prop-api-key');
+    const apiKeyVarLabel = apiKeyVarEl.previousElementSibling;
+    if (template.hideApiKeyVar) {
+      apiKeyVarEl.style.display = 'none';
+      if (apiKeyVarLabel) apiKeyVarLabel.style.display = 'none';
+    } else {
+      apiKeyVarEl.style.display = '';
+      if (apiKeyVarLabel) apiKeyVarLabel.style.display = '';
+      apiKeyVarEl.value = template.apiKeyName || '';
+    }
     document.getElementById('prop-api-key-value').value = widget.properties.apiKey || '';
     const noteEl = document.getElementById('prop-api-note');
     if (noteEl) {

@@ -881,15 +881,16 @@ const WIDGETS = {
     name: 'Claude Usage',
     icon: '🟣',
     category: 'small',
-    description: 'Shows Anthropic Claude API usage for today. Requires ANTHROPIC_ADMIN_KEY env var on the server.',
+    description: 'Shows Anthropic Claude API usage and costs. Requires an Admin API key.',
     defaultWidth: 220,
     defaultHeight: 120,
     hasApiKey: true,
     apiKeyName: 'ANTHROPIC_ADMIN_KEY',
+    hideApiKeyVar: true,
     properties: {
       title: 'Claude',
       refreshInterval: 300,
-      apiKeyNote: 'Requires Admin API key. Get from console.anthropic.com → Settings → Admin API Keys. Set ANTHROPIC_ADMIN_KEY env var.'
+      apiKeyNote: 'Requires Admin API key from console.anthropic.com → Settings → Admin API Keys'
     },
     preview: `<div style="text-align:center;padding:8px;">
       <div style="font-size:11px;color:#a371f7;">Claude</div>
@@ -948,15 +949,16 @@ const WIDGETS = {
     name: 'OpenAI Usage',
     icon: '🟢',
     category: 'small',
-    description: 'Shows OpenAI API usage costs for today. Requires OPENAI_API_KEY env var on the server.',
+    description: 'Shows OpenAI API usage and costs. Requires API key with Usage permission.',
     defaultWidth: 220,
     defaultHeight: 120,
     hasApiKey: true,
     apiKeyName: 'OPENAI_API_KEY',
+    hideApiKeyVar: true,
     properties: {
       title: 'OpenAI',
       refreshInterval: 300,
-      apiKeyNote: 'Requires API key with Usage permission. Set OPENAI_API_KEY env var.'
+      apiKeyNote: 'Requires API key with Usage permission from platform.openai.com → API Keys'
     },
     preview: `<div style="text-align:center;padding:8px;">
       <div style="font-size:11px;color:#3fb950;">OpenAI</div>
