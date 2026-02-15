@@ -268,5 +268,21 @@
   </footer>
 
   <script src="script.js"></script>
+<!-- Lightbox -->
+<div id="lb-lightbox" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.9);justify-content:center;align-items:center;cursor:default;" onclick="this.style.display='none'">
+  <div style="position:relative;display:inline-block;" onclick="event.stopPropagation()">
+    <img id="lb-lightbox-img" style="max-width:92vw;max-height:92vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <button onclick="document.getElementById('lb-lightbox').style.display='none'" style="position:absolute;top:-12px;right:-12px;background:#30363d;border:2px solid #555;color:#fff;font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.5);" onmouseover="this.style.background='#da3633'" onmouseout="this.style.background='#30363d'">&times;</button>
+  </div>
+</div>
+<script>
+document.querySelectorAll('.screenshot').forEach(img => {
+  img.style.cursor = 'zoom-in';
+  img.addEventListener('click', () => {
+    document.getElementById('lb-lightbox-img').src = img.src;
+    document.getElementById('lb-lightbox').style.display = 'flex';
+  });
+});
+</script>
 </body>
 </html>
